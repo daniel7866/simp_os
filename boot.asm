@@ -1,6 +1,11 @@
 [BITS 16]
 [ORG 0x7C00]
 
+; write to the screen in VGA text mode (mode 03)
+VGA_MEMORY equ 0xB8000
+VGA_MEMORY_SIZE equ 4000 ; this mode is 80x25 where each one is two bytes (ascii + color)
+;
+
 REAL_MODE_START: ; 0x7C00
 
     CLI ; no interrupts
@@ -12,6 +17,22 @@ REAL_MODE_START: ; 0x7C00
 
 [BITS 32]
 PROTECTED_MODE_CODE: ; 0x9000
+    MOV ECX, VGA_MEMORY_SIZE
+
+    TOP:
+        MOV byte [VGA_MEMORY + ECX], 0x0
+    LOOP TOP
+
+    MOV word [VGA_MEMORY +  0], 0x0F53 ; S
+    MOV word [VGA_MEMORY +  2], 0x0F69 ; i
+    MOV word [VGA_MEMORY +  4], 0x0F6D ; m
+    MOV word [VGA_MEMORY +  6], 0x0F70 ; p
+
+    MOV word [VGA_MEMORY +  8], 0x0F20 ; 
+
+    MOV word [VGA_MEMORY + 10], 0x0F4F ; O
+    MOV word [VGA_MEMORY + 12], 0x0F53 ; S
+
     HLT ; Stop execution
 
 
