@@ -16,6 +16,9 @@ REAL_MODE_START: ; 0x7C00
     MOV AX, 0x10 ; index=2, TI=0(GDT), CPL=0
     MOV DS, AX
 
+    MOV AX, 0x10 ; index=2, TI=0(GDT), CPL=0
+    MOV ES, AX
+
     MOV AX, 0x18 ; index=3, TI=0(GDT), CPL=0
     MOV SS, AX
 
@@ -31,12 +34,21 @@ PM_CPL_0_STACK:
     times 50 db 0;
 
 PM_CPL_0_CODE:
-    MOV ECX, VGA_MEMORY_SIZE
+    CALL CLEAR_SCREEN
+    CALL PRINT_LOGO
 
-    TOP:
-        MOV byte [VGA_MEMORY + ECX], 0x0
-    LOOP TOP
+    HLT ; Stop execution
 
+
+CLEAR_SCREEN:
+    MOV AX, 0x0
+    MOV ECX, VGA_MEMORY_SIZE / 2
+    MOV EDI, VGA_MEMORY
+    REP STOSW
+
+    RET
+
+PRINT_LOGO:
     MOV word [VGA_MEMORY +  0], 0x0F53 ; S
     MOV word [VGA_MEMORY +  2], 0x0F69 ; i
     MOV word [VGA_MEMORY +  4], 0x0F6D ; m
@@ -47,8 +59,7 @@ PM_CPL_0_CODE:
     MOV word [VGA_MEMORY + 10], 0x0F4F ; O
     MOV word [VGA_MEMORY + 12], 0x0F53 ; S
 
-    HLT ; Stop execution
-
+    RET
 
 align 8 ; intel recommends 8 byte alignemnt of the GDT for best performance
 GDT_:
