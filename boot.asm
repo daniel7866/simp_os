@@ -13,10 +13,24 @@ REAL_MODE_START: ; 0x7C00
     MOV EAX, 0x1
     MOV CR0, EAX ; PROTECTED MODE
     
-    JMP 0x8:PROTECTED_MODE_CODE
+    MOV AX, 0x10 ; index=2, TI=0(GDT), CPL=0
+    MOV DS, AX
+
+    MOV AX, 0x18 ; index=3, TI=0(GDT), CPL=0
+    MOV SS, AX
+
+    MOV ESP, PM_CPL_0_STACK + 50
+    MOV EBP, PM_CPL_0_STACK
+
+    JMP 0x8:PM_CPL_0_CODE
+
 
 [BITS 32]
-PROTECTED_MODE_CODE: ; 0x9000
+
+PM_CPL_0_STACK:
+    times 50 db 0;
+
+PM_CPL_0_CODE:
     MOV ECX, VGA_MEMORY_SIZE
 
     TOP:
@@ -44,11 +58,27 @@ GDT_:
     dw 0xFFFF ; limit[15:0]
     dw 0x0000 ; base[15:0]
     db 0x0    ; base[16:23]
-    db 0x9A   ; TYPE(CODE), S=1(CODE),DPL=0,P=1(PRESENT)
+    db 0x9A   ; TYPE(CODE), S=1(CODE/DATA),DPL=0,P=1(PRESENT)
     db 0xCF   ; LIMIT[19:16], AVL=1,L=0(32 bit),D/B=1(32 bit),G=1
     db 0x0    ; BASE[31:24]
 
-    ; (0x10)
+    ; (0x10) PM DATA
+    dw 0xFFFF ; limit[15:0]
+    dw 0x0000 ; base[15:0]
+    db 0x0    ; base[16:23]
+    db 0x92   ; TYPE(DATA), S=1(CODE/DATA),DPL=0,P=1(PRESENT)
+    db 0xCF   ; LIMIT[19:16], AVL=1,L=0(32 bit),D/B=1(32 bit),G=1
+    db 0x0    ; BASE[31:24]
+
+    ; (0x18) PM STACK
+    dw 0xFFFF ; limit[15:0]
+    dw 0x0000 ; base[15:0]
+    db 0x0    ; base[16:23]
+    db 0x92   ; TYPE(DATA), S=1(CODE/DATA),DPL=0,P=1(PRESENT)
+    db 0xCF   ; LIMIT[19:16], AVL=1,L=0(32 bit),D/B=1(32 bit),G=1
+    db 0x0    ; BASE[31:24]
+
+    ; (0x20)
     GDT_DESC:
     dw $ - GDT_ - 1   ; limit
     dd GDT_                 ; base
